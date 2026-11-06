@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Colorir</title>
+<meta name="theme-color" content="#f6f1e9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Colorir">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== Galeria ===== -->
+<section id="gallery" class="screen active">
+  <header class="g-head">
+    <h1>Colorir</h1>
+    <div class="g-actions">
+      <label class="btn primary" id="importBtn">
+        <svg viewBox="0 0 24 24"><path d="M12 4v11M7 9l5-5 5 5M5 19h14"/></svg>
+        <span>Importar</span>
+        <input type="file" id="importInput" accept="image/*,application/pdf" multiple hidden>
+      </label>
+      <button class="btn icon" id="menuBtn" aria-label="Mais opções">
+        <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
+      </button>
+    </div>
+  </header>
+  <div id="installHint" class="hint" hidden>
+    <span>Para o progresso ficar sempre guardado, instale a app: <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b>.</span>
+    <button class="link" id="installHintClose">OK</button>
+  </div>
+  <div id="storageWarn" class="hint warn" hidden>Este navegador não está a guardar dados. O trabalho perde-se ao fechar.</div>
+  <nav class="chips" id="chips"></nav>
+  <main class="grid" id="grid"></main>
+  <p class="empty" id="emptyMsg" hidden></p>
+</section>
+
+<!-- ===== Editor ===== -->
+<section id="editor" class="screen">
+  <header class="e-head">
+    <button class="btn icon" id="backBtn" aria-label="Voltar">
+      <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="e-title" id="eTitle"></div>
+    <div class="e-actions">
+      <button class="btn icon" id="undoBtn" aria-label="Desfazer"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
+      <button class="btn icon" id="redoBtn" aria-label="Refazer"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
+      <button class="btn icon" id="fitBtn" aria-label="Ajustar ao ecrã"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="btn icon" id="eMenuBtn" aria-label="Mais"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></button>
+      <button class="btn primary" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 13v7h14v-7"/></svg><span>Exportar</span></button>
+    </div>
+  </header>
+
+  <div id="viewport">
+    <div id="stage">
+      <canvas id="colorCanvas"></canvas>
+      <canvas id="strokeCanvas"></canvas>
+      <canvas id="lineCanvas"></canvas>
+    </div>
+    <div id="cursor"></div>
+    <div id="busy" hidden><div class="spinner"></div></div>
+  </div>
+
+  <footer class="dock">
+    <div class="row tools-row">
+      <div class="seg" id="tools">
+        <button data-tool="fill" class="tool" aria-label="Balde"><svg viewBox="0 0 24 24"><path d="M5 11l7-7 7 7-7 7z"/><path d="M5 11h14"/><path d="M20 15c0 1.5-1 3-1 3s-1-1.5-1-3a1 1 0 012 0z"/></svg><span>Balde</span></button>
+        <button data-tool="brush" class="tool" aria-label="Pincel"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-8 8H6v-6z"/><path d="M12 6l6 6"/></svg><span>Pincel</span></button>
+        <button data-tool="eraser" class="tool" aria-label="Borracha"><svg viewBox="0 0 24 24"><path d="M9 19l-5-5 9-9 7 7-7 7z"/><path d="M8 10l6 6M9 19h11"/></svg><span>Borracha</span></button>
+        <button data-tool="picker" class="tool" aria-label="Conta-gotas"><svg viewBox="0 0 24 24"><path d="M15 4l5 5-2 2-5-5zM13 6l-8 8v5h5l8-8"/></svg><span>Cor</span></button>
+      </div>
+      <label class="slider" id="sizeWrap"><span>Tamanho</span><input type="range" id="size" min="2" max="160" value="24"><output id="sizeOut">24</output></label>
+      <label class="slider"><span>Opacidade</span><input type="range" id="opacity" min="5" max="100" value="100"><output id="opOut">100%</output></label>
+      <button class="toggle" id="clipToggle" aria-pressed="true"><span class="dot"></span>Dentro das linhas</button>
+    </div>
+    <div class="row colors-row">
+      <div class="current">
+        <span class="swatch big" id="currentSwatch"></span>
+        <label class="swatch custom" aria-label="Escolher cor"><input type="color" id="colorInput" value="#e8668a"></label>
+      </div>
+      <select id="paletteSelect" aria-label="Paleta"></select>
+      <div class="swatches" id="swatches"></div>
+      <div class="recent" id="recent"></div>
+    </div>
+  </footer>
+</section>
+
+<!-- ===== Diálogos ===== -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-card" id="sheetCard"></div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="restoreInput" accept="application/json,.json" hidden>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
